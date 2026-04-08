@@ -1,10 +1,9 @@
-import { Request, Response, Router } from "express";
+import { Router } from "express";
+import * as suggestionController from "../controllers/suggestion.controller";
 
 const suggestionRouter = Router();
 
-suggestionRouter.get("/api/v1/suggestions", (req: Request, res: Response) => {
-    res.send("Suggestions");
-});
+suggestionRouter.post("/api/v1/suggestions", suggestionController.handleSuggestion);
 
 export { suggestionRouter };
 

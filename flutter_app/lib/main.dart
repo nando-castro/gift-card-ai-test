@@ -54,16 +54,16 @@ class _SuggestionPageState extends State<SuggestionPage> {
         }),
       );
 
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
+      final data = jsonDecode(response.body);
 
+      if (response.statusCode == 200) {
         setState(() {
           suggestions = List<String>.from(data['suggestions']);
           source = data['source'];
         });
       } else {
         setState(() {
-          errorMessage = 'Error loading suggestions';
+          errorMessage = extractErrorMessage(data);
         });
       }
     } catch (e) {
@@ -75,6 +75,27 @@ class _SuggestionPageState extends State<SuggestionPage> {
         isLoading = false;
       });
     }
+  }
+
+  String extractErrorMessage(dynamic data) {
+    if (data is! Map<String, dynamic>) {
+      return 'Unexpected error';
+    }
+
+    final message = data['message'];
+
+    if (message is String && message.isNotEmpty) {
+      return message;
+    }
+
+    return 'Unexpected error';
+  }
+
+  @override
+  void dispose() {
+    occasionController.dispose();
+    relationshipController.dispose();
+    super.dispose();
   }
 
   @override
@@ -112,7 +133,11 @@ class _SuggestionPageState extends State<SuggestionPage> {
             ),
             const SizedBox(height: 20),
             if (isLoading) const CircularProgressIndicator(),
-            if (errorMessage.isNotEmpty) Text(errorMessage),
+            if (errorMessage.isNotEmpty)
+              Text(
+                errorMessage,
+                style: const TextStyle(color: Colors.red),
+              ),
             if (source.isNotEmpty) Text('Source: $source'),
             const SizedBox(height: 12),
             Expanded(

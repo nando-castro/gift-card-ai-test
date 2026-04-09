@@ -31,6 +31,16 @@ class _SuggestionPageState extends State<SuggestionPage> {
   final occasionController = TextEditingController();
   final relationshipController = TextEditingController();
 
+  final List<String> occasionOptions = [
+    'Birthday',
+    'Wedding',
+    'Graduation',
+    'Thank you',
+    'Other',
+  ];
+
+  String selectedOccasion = 'Birthday';
+
   bool isLoading = false;
   String errorMessage = '';
   List<String> suggestions = [];
@@ -44,12 +54,16 @@ class _SuggestionPageState extends State<SuggestionPage> {
       source = '';
     });
 
+    final occasionValue = selectedOccasion == 'Other'
+        ? occasionController.text
+        : selectedOccasion;
+
     try {
       final response = await http.post(
         Uri.parse('http://localhost:3000/api/v1/suggestions'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
-          'occasion': occasionController.text,
+          'occasion': occasionValue,
           'relationship': relationshipController.text,
         }),
       );
@@ -101,20 +115,33 @@ class _SuggestionPageState extends State<SuggestionPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Gift Card Message Suggester'),
-      ),
+      appBar: AppBar(title: const Text('Gift Card Message Suggester')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            TextField(
-              controller: occasionController,
-              decoration: const InputDecoration(
-                labelText: 'Occasion',
-                hintText: 'e.g. Birthday',
-              ),
+            DropdownButtonFormField<String>(
+              value: selectedOccasion,
+              decoration: const InputDecoration(labelText: 'Occasion'),
+              items: occasionOptions.map((option) {
+                return DropdownMenuItem(value: option, child: Text(option));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedOccasion = value!;
+                });
+              },
             ),
+            if (selectedOccasion == 'Other') ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: occasionController,
+                decoration: const InputDecoration(
+                  labelText: 'Type the occasion',
+                  hintText: 'e.g. Baby shower',
+                ),
+              ),
+            ],
             const SizedBox(height: 12),
             TextField(
               controller: relationshipController,
@@ -134,21 +161,14 @@ class _SuggestionPageState extends State<SuggestionPage> {
             const SizedBox(height: 20),
             if (isLoading) const CircularProgressIndicator(),
             if (errorMessage.isNotEmpty)
-              Text(
-                errorMessage,
-                style: const TextStyle(color: Colors.red),
-              ),
+              Text(errorMessage, style: const TextStyle(color: Colors.red)),
             if (source.isNotEmpty) Text('Source: $source'),
             const SizedBox(height: 12),
             Expanded(
               child: ListView.builder(
                 itemCount: suggestions.length,
                 itemBuilder: (context, index) {
-                  return Card(
-                    child: ListTile(
-                      title: Text(suggestions[index]),
-                    ),
-                  );
+                  return Card(child: ListTile(title: Text(suggestions[index])));
                 },
               ),
             ),

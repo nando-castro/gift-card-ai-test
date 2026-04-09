@@ -39,7 +39,22 @@ class _SuggestionPageState extends State<SuggestionPage> {
     'Other',
   ];
 
+  final List<String> relationshipOptions = [
+    'Friend',
+    'Colleague',
+    'Parent',
+    'Mother',
+    'Father',
+    'Brother',
+    'Sister',
+    'Girlfriend',
+    'Boyfriend',
+    'Teacher',
+    'Other',
+  ];
+
   String selectedOccasion = 'Birthday';
+  String selectedRelationship = 'Friend';
 
   bool isLoading = false;
   String errorMessage = '';
@@ -58,13 +73,17 @@ class _SuggestionPageState extends State<SuggestionPage> {
         ? occasionController.text
         : selectedOccasion;
 
+    final relationshipValue = selectedRelationship == 'Other'
+        ? relationshipController.text
+        : selectedRelationship;
+
     try {
       final response = await http.post(
         Uri.parse('http://localhost:3000/api/v1/suggestions'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({
           'occasion': occasionValue,
-          'relationship': relationshipController.text,
+          'relationship': relationshipValue,
         }),
       );
 
@@ -143,13 +162,28 @@ class _SuggestionPageState extends State<SuggestionPage> {
               ),
             ],
             const SizedBox(height: 12),
-            TextField(
-              controller: relationshipController,
-              decoration: const InputDecoration(
-                labelText: 'Relationship',
-                hintText: 'e.g. Friend',
-              ),
+            DropdownButtonFormField<String>(
+              value: selectedRelationship,
+              decoration: const InputDecoration(labelText: 'Relationship'),
+              items: relationshipOptions.map((option) {
+                return DropdownMenuItem(value: option, child: Text(option));
+              }).toList(),
+              onChanged: (value) {
+                setState(() {
+                  selectedRelationship = value!;
+                });
+              },
             ),
+            if (selectedRelationship == 'Other') ...[
+              const SizedBox(height: 12),
+              TextField(
+                controller: relationshipController,
+                decoration: const InputDecoration(
+                  labelText: 'Type the relationship',
+                  hintText: 'e.g. Neighbor',
+                ),
+              ),
+            ],
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
